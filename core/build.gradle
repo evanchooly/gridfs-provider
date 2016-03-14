@@ -1,0 +1,32 @@
+apply plugin: 'osgi'
+apply plugin: 'kotlin'
+
+def configDir = new File(rootDir, 'config')
+archivesBaseName = 'gridfs-fsprovider'
+
+dependencies {
+    compile "org.mongodb:mongodb-driver:${driverVersion}"
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+}
+
+jar {
+    manifest {
+        instruction 'Import-Package',
+                    'com.mongodb.*'
+    }
+}
+/*
+buildscript {
+    ext.kotlin_version = '1.0.0'
+    repositories {
+        mavenCentral()
+    }
+}
+repositories {
+    mavenCentral()
+}
+sourceSets {
+    main.java.srcDirs += 'src/main/kotlin'
+}
+
+*/

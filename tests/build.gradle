@@ -1,0 +1,6 @@
+def configDir = new File(rootDir, 'config')
+
+dependencies {
+    testCompile project(":core")
+}
+
