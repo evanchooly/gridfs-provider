@@ -1,8 +1,8 @@
 ext.driverVersion = '3.2.1'
-ext.kotlin_version = '1.0.0'
+ext.kotlin_version = '1.0.1'
 
 buildscript {
-    ext.kotlin_version = '1.0.0'
+    ext.kotlin_version = '1.0.1'
     repositories {
         mavenLocal()
         mavenCentral()

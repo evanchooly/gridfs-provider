@@ -39,7 +39,7 @@ class GridFSFileSystem(uri: MongoClientURI, private val provider: GridFSFileSyst
         throw UnsupportedOperationException()
     }
 
-    override fun getPath(first: String, vararg more: String): Path {
+    override fun getPath(first: String, vararg more: String): GridFSPath {
         return if (more.size == 0) GridFSPath(this, first) else GridFSPath(this, listOf(first) + more.asList());
     }
 

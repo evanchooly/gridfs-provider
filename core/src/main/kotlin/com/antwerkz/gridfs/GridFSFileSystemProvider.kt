@@ -5,6 +5,8 @@ import com.mongodb.client.gridfs.GridFSBuckets
 import com.mongodb.client.gridfs.GridFSUploadStream
 import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
+import com.mongodb.client.model.Filters
+import java.io.FileNotFoundException
 import java.io.InputStream
 import java.net.URI
 import java.nio.channels.SeekableByteChannel
@@ -14,6 +16,7 @@ import java.nio.file.DirectoryStream
 import java.nio.file.DirectoryStream.Filter
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
+import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.LinkOption
 import java.nio.file.OpenOption
@@ -79,19 +82,23 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     }
 
     override fun copy(source: Path, target: Path, vararg options: CopyOption) {
+        if(!Files.isSameFile(source, target)) {
+
+        }
         throw UnsupportedOperationException("Not implemented yet!")
     }
 
     override fun move(source: Path, target: Path, vararg options: CopyOption) {
-        throw UnsupportedOperationException("Not implemented yet!")
+        copy(source, target, *options)
+        delete(source)
     }
 
     override fun isSameFile(path: Path, path2: Path): Boolean {
-        throw UnsupportedOperationException("Not implemented yet!")
+        return path.normalize().equals(path2.normalize())
     }
 
     override fun isHidden(path: Path): Boolean {
-        throw UnsupportedOperationException("Not implemented yet!")
+        return false;
     }
 
     override fun getFileStore(path: Path): FileStore {
@@ -99,7 +106,13 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     }
 
     override fun checkAccess(path: Path, vararg modes: AccessMode) {
-        throw UnsupportedOperationException("Not implemented yet!")
+        path as GridFSPath
+        val fileSystem = path.fileSystem
+        val bucket = GridFSBuckets.create(fileSystem.database, path.bucketName)
+        val find = bucket.find(Filters.eq("filename", path.file))
+        if(find.firstOrNull() == null) {
+            throw FileNotFoundException("$path was not found in the '${path.bucketName}' bucket")
+        }
     }
 
     override fun <V : FileAttributeView> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V {

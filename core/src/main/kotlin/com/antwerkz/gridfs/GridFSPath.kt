@@ -4,7 +4,7 @@ import java.io.File
 import java.net.URI
 import java.nio.file.*
 
-class GridFSPath(private val fileSystem: GridFSFileSystem, private val path: String) : Path {
+class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
     val bucketName: String
     val file: String
 
@@ -78,12 +78,27 @@ class GridFSPath(private val fileSystem: GridFSFileSystem, private val path: Str
         throw UnsupportedOperationException()
     }
 
-    override fun toRealPath(vararg options: LinkOption?): Path? {
+    override fun toRealPath(vararg options: LinkOption?): Path {
         throw UnsupportedOperationException()
     }
 
-    override fun normalize(): Path? {
-        throw UnsupportedOperationException()
+    override fun normalize(): GridFSPath {
+        val parts = split()
+                .filter { it != "." }
+                .toMutableList()
+        var result = mutableListOf<String>()
+        for (part in parts) {
+            if(part == "..") {
+                if(result.isEmpty()) {
+                    throw IllegalStateException("Trying to normalize() an invalid path: ${path}")
+                }
+                result = result.dropLast(1) as MutableList<String>
+            } else {
+                result.add(part)
+            }
+
+        }
+        return GridFSPath(fileSystem, result)
     }
 
     override fun getParent(): Path? {
