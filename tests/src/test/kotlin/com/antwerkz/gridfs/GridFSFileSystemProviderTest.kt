@@ -3,13 +3,20 @@ package com.antwerkz.gridfs
 import com.mongodb.MongoClient
 import org.testng.Assert
 import org.testng.annotations.AfterTest
+import org.testng.annotations.BeforeTest
 import org.testng.annotations.Test
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
 
 class GridFSFileSystemProviderTest {
-    val client = MongoClient("localhost")
+    lateinit var client: MongoClient
+
+    @BeforeTest
+    fun open() {
+        client = MongoClient("localhost")
+        client.getDatabase("gridfs").drop()
+    }
 
     @AfterTest
     fun close() {
@@ -95,5 +102,7 @@ class GridFSFileSystemProviderTest {
         } finally {
             inputStream.close();
         }
+
+        Assert.assertFalse(Files.exists(path))
     }
 }

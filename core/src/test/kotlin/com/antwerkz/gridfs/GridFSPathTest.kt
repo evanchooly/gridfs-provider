@@ -5,11 +5,10 @@ import org.testng.Assert
 import org.testng.annotations.AfterTest
 import org.testng.annotations.Test
 import java.net.URI
-import java.nio.file.FileSystems
 
 class GridFSPathTest {
     val client = MongoClient("localhost")
-    val fileSystem = FileSystems.getFileSystem(URI("gridfs://localhost/bob")) as GridFSFileSystem
+    val fileSystem = GridFSFileSystemProvider().getFileSystem(URI("gridfs://localhost/bob")) as GridFSFileSystem
 
     @AfterTest
     fun close() {

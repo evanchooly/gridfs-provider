@@ -1,11 +1,14 @@
 package com.antwerkz.gridfs
 
 import com.mongodb.MongoClientURI
-import com.mongodb.client.gridfs.GridFSBuckets
 import com.mongodb.client.gridfs.GridFSUploadStream
 import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
 import com.mongodb.client.model.Filters
+import org.bson.BsonDocument
+import org.bson.Document
+import org.bson.codecs.configuration.CodecRegistry
+import org.bson.conversions.Bson
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.net.URI
@@ -21,6 +24,7 @@ import java.nio.file.InvalidPathException
 import java.nio.file.LinkOption
 import java.nio.file.OpenOption
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
@@ -40,16 +44,15 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     }
 
     override fun getPath(uri: URI): Path {
-        throw UnsupportedOperationException("Not implemented yet!")
+        throw UnsupportedOperationException("Not implemented")
     }
 
     override fun newInputStream(path: Path, vararg options: OpenOption): InputStream {
         val fileSystem = path.fileSystem
         if ( fileSystem is GridFSFileSystem ) {
-            val gridFsPath = path as GridFSPath
+            path as GridFSPath
 
-            val bucket = GridFSBuckets.create(fileSystem.database, gridFsPath.bucketName)
-            return bucket.openDownloadStreamByName(path.file, GridFSDownloadByNameOptions())
+            return fileSystem.bucket.openDownloadStreamByName(path.path, GridFSDownloadByNameOptions())
         }
         throw InvalidPathException(path.toString(), "Only gridfs paths are allowed: $path")
     }
@@ -57,38 +60,52 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     override fun newOutputStream(path: Path, vararg options: OpenOption): GridFSUploadStream {
         val fileSystem = path.fileSystem
         if ( fileSystem is GridFSFileSystem ) {
-            val gridFsPath = path as GridFSPath
+            path as GridFSPath
 
-            val bucket = GridFSBuckets.create(fileSystem.database, gridFsPath.bucketName)
-            return bucket.openUploadStream(path.file, GridFSUploadOptions())
+            return fileSystem.bucket.openUploadStream(path.path, GridFSUploadOptions())
         }
         throw InvalidPathException(path.toString(), "Only gridfs paths are allowed: $path")
     }
 
     override fun newByteChannel(path: Path, options: Set<OpenOption>, vararg attrs: FileAttribute<*>): SeekableByteChannel {
-        throw UnsupportedOperationException("Not implemented yet!")
+        throw UnsupportedOperationException("Not implemented")
     }
 
     override fun newDirectoryStream(dir: Path, filter: Filter<in Path>): DirectoryStream<Path> {
-        throw UnsupportedOperationException("Not implemented yet!")
+        throw UnsupportedOperationException("Not implemented")
     }
 
     override fun createDirectory(dir: Path, vararg attrs: FileAttribute<*>) {
-        throw UnsupportedOperationException("Not implemented yet!")
+        throw UnsupportedOperationException("Not implemented")
     }
 
     override fun delete(path: Path) {
-        throw UnsupportedOperationException("Not implemented yet!")
+        path as GridFSPath
+
+        val bucket = path.fileSystem.bucket
+        val gridFsFile = bucket.find(Document("filename", path.path)).firstOrNull()
+        gridFsFile?.let { file ->
+            bucket.delete(file.objectId)
+        }
     }
 
     override fun copy(source: Path, target: Path, vararg options: CopyOption) {
         if(!Files.isSameFile(source, target)) {
-
+            val inputStream = newInputStream(source)
+            val outputStream = newOutputStream(target)
+            try {
+                inputStream.copyTo(outputStream)
+            } finally {
+                inputStream.close()
+                outputStream.close()
+            }
         }
-        throw UnsupportedOperationException("Not implemented yet!")
     }
 
     override fun move(source: Path, target: Path, vararg options: CopyOption) {
+        source as GridFSPath
+        target as GridFSPath
+
         copy(source, target, *options)
         delete(source)
     }
@@ -102,32 +119,31 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     }
 
     override fun getFileStore(path: Path): FileStore {
-        throw UnsupportedOperationException("Not implemented yet!")
+        throw UnsupportedOperationException("Not implemented")
     }
 
     override fun checkAccess(path: Path, vararg modes: AccessMode) {
         path as GridFSPath
         val fileSystem = path.fileSystem
-        val bucket = GridFSBuckets.create(fileSystem.database, path.bucketName)
-        val find = bucket.find(Filters.eq("filename", path.file))
+        val find = fileSystem.bucket.find(Filters.eq("filename", path.path))
         if(find.firstOrNull() == null) {
-            throw FileNotFoundException("$path was not found in the '${path.bucketName}' bucket")
+            throw FileNotFoundException("$path was not found in the '${fileSystem.bucketName}' bucket")
         }
     }
 
     override fun <V : FileAttributeView> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V {
-        throw UnsupportedOperationException("Not implemented yet!")
+        throw UnsupportedOperationException("Not implemented")
     }
 
     override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
-        throw UnsupportedOperationException("Not implemented yet!")
+        throw UnsupportedOperationException("Not implemented")
     }
 
     override fun readAttributes(path: Path, attributes: String, vararg options: LinkOption): Map<String, Any> {
-        throw UnsupportedOperationException("Not implemented yet!")
+        throw UnsupportedOperationException("Not implemented")
     }
 
     override fun setAttribute(path: Path, attribute: String, value: Any, vararg options: LinkOption) {
-        throw UnsupportedOperationException("Not implemented yet!")
+        throw UnsupportedOperationException("Not implemented")
     }
 }

@@ -5,15 +5,8 @@ import java.net.URI
 import java.nio.file.*
 
 class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
-    val bucketName: String
-    val file: String
 
     constructor(fileSystem: GridFSFileSystem, elements: List<String>) : this(fileSystem, elements.joinToString(fileSystem.separator))
-
-    init {
-        bucketName = path.substringBeforeLast('/')
-        file = path.substringAfterLast('/')
-    }
 
     override fun toFile(): File {
         throw UnsupportedOperationException()

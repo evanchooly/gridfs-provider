@@ -5,7 +5,11 @@ import com.mongodb.MongoClientURI
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.gridfs.GridFSBucket
 import com.mongodb.client.gridfs.GridFSBuckets
-import java.nio.file.*
+import java.nio.file.FileStore
+import java.nio.file.FileSystem
+import java.nio.file.Path
+import java.nio.file.PathMatcher
+import java.nio.file.WatchService
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 
@@ -13,10 +17,14 @@ class GridFSFileSystem(uri: MongoClientURI, private val provider: GridFSFileSyst
     private var open = true
     val database: MongoDatabase
     val client: MongoClient
+    val bucketName: String
+    val bucket: GridFSBucket
 
     init {
         client = MongoClient(uri);
         database = client.getDatabase(uri.database)
+        bucketName = uri.collection ?: "gridfs"
+        bucket = GridFSBuckets.create(database, bucketName)
     }
 
     override fun getSeparator(): String {
