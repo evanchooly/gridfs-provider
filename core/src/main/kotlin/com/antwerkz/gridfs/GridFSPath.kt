@@ -1,5 +1,7 @@
 package com.antwerkz.gridfs
 
+import com.mongodb.client.gridfs.model.GridFSFile
+import org.bson.Document
 import java.io.File
 import java.net.URI
 import java.nio.file.*
@@ -7,6 +9,11 @@ import java.nio.file.*
 class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
 
     constructor(fileSystem: GridFSFileSystem, elements: List<String>) : this(fileSystem, elements.joinToString(fileSystem.separator))
+
+    fun toGridFSFile() : GridFSFile? {
+        val bucket = fileSystem.bucket
+        return bucket.find(Document("filename", path)).firstOrNull()
+    }
 
     override fun toFile(): File {
         throw UnsupportedOperationException()

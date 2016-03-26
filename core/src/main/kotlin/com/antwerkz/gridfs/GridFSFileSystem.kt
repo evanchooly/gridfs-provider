@@ -76,4 +76,23 @@ class GridFSFileSystem(uri: MongoClientURI, private val provider: GridFSFileSyst
         throw UnsupportedOperationException()
     }
 
+    override fun equals(other: Any?): Boolean{
+        if (this === other) return true
+        if (other?.javaClass != javaClass) return false
+
+        other as GridFSFileSystem
+
+        if (database != other.database) return false
+        if (bucketName != other.bucketName) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int{
+        var result = database.hashCode()
+        result += 31 * result + bucketName.hashCode()
+        return result
+    }
+
+
 }

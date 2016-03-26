@@ -5,10 +5,6 @@ import com.mongodb.client.gridfs.GridFSUploadStream
 import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
 import com.mongodb.client.model.Filters
-import org.bson.BsonDocument
-import org.bson.Document
-import org.bson.codecs.configuration.CodecRegistry
-import org.bson.conversions.Bson
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.net.URI
@@ -24,7 +20,6 @@ import java.nio.file.InvalidPathException
 import java.nio.file.LinkOption
 import java.nio.file.OpenOption
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
@@ -83,21 +78,17 @@ class GridFSFileSystemProvider : FileSystemProvider() {
         path as GridFSPath
 
         val bucket = path.fileSystem.bucket
-        val gridFsFile = bucket.find(Document("filename", path.path)).firstOrNull()
-        gridFsFile?.let { file ->
+        path.toGridFSFile()?.let { file ->
             bucket.delete(file.objectId)
         }
     }
 
     override fun copy(source: Path, target: Path, vararg options: CopyOption) {
-        if(!Files.isSameFile(source, target)) {
-            val inputStream = newInputStream(source)
-            val outputStream = newOutputStream(target)
-            try {
-                inputStream.copyTo(outputStream)
-            } finally {
-                inputStream.close()
-                outputStream.close()
+        if (!Files.isSameFile(source, target)) {
+            newOutputStream(target).use { outputStream ->
+                newInputStream(source).use { inputStream ->
+                    inputStream.copyTo(outputStream)
+                }
             }
         }
     }
@@ -105,13 +96,24 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     override fun move(source: Path, target: Path, vararg options: CopyOption) {
         source as GridFSPath
         target as GridFSPath
-
-        copy(source, target, *options)
-        delete(source)
+        if (!Files.isSameFile(source, target)) {
+            if(source.fileSystem.equals(target.fileSystem)) {
+                source.toGridFSFile()?.let { file ->
+                    source.fileSystem.bucket.rename(file.objectId, target.path)
+                }
+            } else {
+                copy(source, target, *options)
+                delete(source)
+            }
+        }
     }
 
     override fun isSameFile(path: Path, path2: Path): Boolean {
-        return path.normalize().equals(path2.normalize())
+        path as GridFSPath
+        path2 as GridFSPath
+
+        return path.fileSystem.equals(path2.fileSystem)
+                && path.normalize().equals(path2.normalize())
     }
 
     override fun isHidden(path: Path): Boolean {
@@ -126,7 +128,7 @@ class GridFSFileSystemProvider : FileSystemProvider() {
         path as GridFSPath
         val fileSystem = path.fileSystem
         val find = fileSystem.bucket.find(Filters.eq("filename", path.path))
-        if(find.firstOrNull() == null) {
+        if (find.firstOrNull() == null) {
             throw FileNotFoundException("$path was not found in the '${fileSystem.bucketName}' bucket")
         }
     }
