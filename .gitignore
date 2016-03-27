@@ -1,5 +1,7 @@
 .idea
 .gradle
 build/
-
+test-output
+kobaltBuild
 *.iml
+.kobalt
