@@ -5,3 +5,4 @@ test-output
 kobaltBuild
 *.iml
 .kobalt
+local.properties
