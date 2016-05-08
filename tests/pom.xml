@@ -8,12 +8,12 @@
     <parent>
         <groupId>com.antwerkz.gridfs-fs-provider</groupId>
         <artifactId>gridfs-fs-provider</artifactId>
-        <version>0.1-SNAPSHOT</version>
+        <version>0.1</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>gridfs-test</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
 
     <build>
         <plugins>
