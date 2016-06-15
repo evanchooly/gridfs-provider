@@ -4,7 +4,13 @@ import com.mongodb.client.gridfs.model.GridFSFile
 import org.bson.Document
 import java.io.File
 import java.net.URI
-import java.nio.file.*
+import java.nio.file.FileSystem
+import java.nio.file.LinkOption
+import java.nio.file.Path
+import java.nio.file.ProviderMismatchException
+import java.nio.file.WatchEvent
+import java.nio.file.WatchKey
+import java.nio.file.WatchService
 
 class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
 
@@ -136,19 +142,32 @@ class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
     }
 
     override fun resolveSibling(other: Path?): Path? {
-        throw UnsupportedOperationException()
+        return fileSystem.getPath(path, other?.toString() ?: "")
     }
 
-    override fun resolveSibling(other: String?): Path? {
-        throw UnsupportedOperationException()
+    override fun resolveSibling(other: String?): Path {
+        return fileSystem.getPath(path, other ?: "")
     }
 
-    override fun resolve(other: Path?): Path? {
-        throw UnsupportedOperationException()
+    override fun resolve(other: Path?): Path {
+        return fileSystem.getPath(path + "/" + toGridFSPath(other).path)
     }
 
-    override fun resolve(other: String?): Path? {
-        throw UnsupportedOperationException()
+    override fun resolve(other: String?): Path {
+        if (other == null) {
+            throw IllegalArgumentException("The provided path can not be null")
+        }
+        return fileSystem.getPath(path + "/" + other)
+    }
+
+    private fun toGridFSPath(other: Path?): GridFSPath {
+        if (other == null) {
+            throw IllegalArgumentException("The provided path can not be null")
+        } else if (other !is GridFSPath) {
+            throw ProviderMismatchException("The provided path is not a GridFSPath")
+        } else {
+            return other
+        }
     }
 
     override fun toAbsolutePath(): Path {
@@ -159,7 +178,7 @@ class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
     }
 
     override fun toString(): String {
-        return fileSystem.provider().scheme + "://" + path
+        return fileSystem.provider().scheme + "://${fileSystem.hosts}/${fileSystem.database.name}.${fileSystem.bucketName}/${path}"
     }
 
     private fun split() = path.split(fileSystem.separator).dropLastWhile { it == "" }

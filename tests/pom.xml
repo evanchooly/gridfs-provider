@@ -25,6 +25,13 @@
                 <groupId>org.jetbrains.kotlin</groupId>
                 <artifactId>kotlin-maven-plugin</artifactId>
             </plugin>
+            <plugin>
+                <groupId>org.jetbrains.dokka</groupId>
+                <artifactId>dokka-maven-plugin</artifactId>
+                <configuration>
+                    <outputFormat>javadoc</outputFormat>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
     <dependencies>

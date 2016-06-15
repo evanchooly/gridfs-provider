@@ -19,9 +19,11 @@ class GridFSFileSystem(uri: MongoClientURI, private val provider: GridFSFileSyst
     val client: MongoClient
     val bucketName: String
     val bucket: GridFSBucket
+    val hosts: String
 
     init {
         client = MongoClient(uri);
+        hosts = uri.hosts.joinToString(",")
         database = client.getDatabase(uri.database)
         bucketName = uri.collection ?: "gridfs"
         bucket = GridFSBuckets.create(database, bucketName)
@@ -93,6 +95,5 @@ class GridFSFileSystem(uri: MongoClientURI, private val provider: GridFSFileSyst
         result += 31 * result + bucketName.hashCode()
         return result
     }
-
 
 }
