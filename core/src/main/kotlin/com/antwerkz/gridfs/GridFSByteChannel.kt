@@ -15,16 +15,18 @@ class GridFSByteChannel(val path: GridFSPath) : SeekableByteChannel {
 
     override fun write(src: ByteBuffer): Int {
         val bytes = ByteArray(8192)
-        var written = position
+        var written = 0
         if (inputStream == null) {
             if (outputStream == null) {
                 outputStream = path.newOutputStream()
             }
-            while (src.remaining() > position) {
-                val count = min(src.remaining(), bytes.size)
-                src.get(bytes, position, count)
-                written += count
-                outputStream?.write(bytes, position, count)
+            outputStream?.use {
+                while (src.remaining() > 0) {
+                    val count = min(src.remaining(), bytes.size)
+                    src.get(bytes, position, count)
+                    written += count
+                    outputStream?.write(bytes, position, count)
+                }
             }
         } else {
             throw IllegalStateException("Path already open for reading.  Can not be opened for writing.")
