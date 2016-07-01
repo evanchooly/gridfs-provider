@@ -39,12 +39,8 @@ class GridFSFileSystemProviderTest {
         writer.flush();
         writer.close();
 
-        val inputStream = Files.newInputStream(path)
-        try {
-            val readText = inputStream.reader().readText()
-            Assert.assertEquals(readText, "hello world");
-        } finally {
-            inputStream.close();
+        Files.newInputStream(path).reader().use  {
+            Assert.assertEquals(it.readText(), "hello world");
         }
     }
 
@@ -105,10 +101,10 @@ class GridFSFileSystemProviderTest {
             writer.flush();
         }
 
-        val path1 = fileSystem.getPath("/Users/bob/hello")
-        Files.move(path, path1)
+        val hello = fileSystem.getPath("/Users/bob/hello")
+        Files.move(path, hello)
 
-        Files.newInputStream(path1).reader().use { reader ->
+        Files.newInputStream(hello).reader().use { reader ->
             Assert.assertEquals(reader.readText(), "hello world");
         }
 

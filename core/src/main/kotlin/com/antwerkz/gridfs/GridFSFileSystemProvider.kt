@@ -2,8 +2,6 @@ package com.antwerkz.gridfs
 
 import com.mongodb.MongoClientURI
 import com.mongodb.client.gridfs.GridFSUploadStream
-import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions
-import com.mongodb.client.gridfs.model.GridFSUploadOptions
 import com.mongodb.client.model.Filters
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -16,15 +14,14 @@ import java.nio.file.DirectoryStream.Filter
 import java.nio.file.FileStore
 import java.nio.file.FileSystem
 import java.nio.file.Files
-import java.nio.file.InvalidPathException
 import java.nio.file.LinkOption
 import java.nio.file.OpenOption
 import java.nio.file.Path
+import java.nio.file.ProviderMismatchException
 import java.nio.file.attribute.BasicFileAttributeView
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
-import java.nio.file.attribute.FileTime
 import java.nio.file.spi.FileSystemProvider
 
 class GridFSFileSystemProvider : FileSystemProvider() {
@@ -41,47 +38,36 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     }
 
     override fun getPath(uri: URI): Path {
-//        val host = uri.host
-//        val port = if (uri.port == -1) 27017 else uri.port
-//        var split = uri.path.split('/')
-//        if (split[0] == "") {
-//            split = split.drop(1)
-//        }
-//        val db = split[0]
-//        val collection = split[1]
         val split = uri.path.split("/")
         val ns = split[1]
         val path = split.drop(2).joinToString("/", "/")
         val mongoUri = uri.toString().replace(uri.path, "") + "/" + ns
         val fileSystem = getFileSystem(URI(mongoUri))
         return fileSystem.getPath(path)
-
     }
 
     override fun newInputStream(path: Path, vararg options: OpenOption): InputStream {
-        val fileSystem = path.fileSystem
-        if (fileSystem is GridFSFileSystem) {
-            path as GridFSPath
-
-            return fileSystem.bucket.openDownloadStreamByName(path.path, GridFSDownloadByNameOptions())
-        }
-        throw InvalidPathException(path.toString(), "Only gridfs paths are allowed: $path")
+        return checkPath(path).newInputStream()
     }
 
     override fun newOutputStream(path: Path, vararg options: OpenOption): GridFSUploadStream {
-        val fileSystem = path.fileSystem
-        if (fileSystem is GridFSFileSystem) {
-            path as GridFSPath
+        return checkPath(path).newOutputStream()
+    }
 
-            return fileSystem.bucket.openUploadStream(path.path, GridFSUploadOptions())
+    override fun newByteChannel(path: Path?, options: Set<OpenOption>, vararg attrs: FileAttribute<*>): SeekableByteChannel {
+        return GridFSByteChannel(checkPath(path) )
+    }
+
+    internal fun checkPath(path: Path?): GridFSPath {
+        if (path == null) {
+            throw NullPointerException()
+        } else if (path !is GridFSPath) {
+            throw ProviderMismatchException()
+        } else {
+            return path
         }
-        throw InvalidPathException(path.toString(), "Only gridfs paths are allowed: $path")
     }
-
-    override fun newByteChannel(path: Path, options: Set<OpenOption>, vararg attrs: FileAttribute<*>): SeekableByteChannel {
-        throw UnsupportedOperationException("Not implemented")
-    }
-
+    
     override fun newDirectoryStream(dir: Path, filter: Filter<in Path>): DirectoryStream<Path> {
         throw UnsupportedOperationException("Not implemented")
     }
@@ -93,7 +79,7 @@ class GridFSFileSystemProvider : FileSystemProvider() {
         path as GridFSPath
 
         val bucket = path.fileSystem.bucket
-        path.toGridFSFile()?.let { file ->
+        path.file?.let { file ->
             bucket.delete(file.objectId)
         }
     }
@@ -113,7 +99,7 @@ class GridFSFileSystemProvider : FileSystemProvider() {
         target as GridFSPath
         if (!Files.isSameFile(source, target)) {
             if (source.fileSystem.equals(target.fileSystem)) {
-                source.toGridFSFile()?.let { file ->
+                source.file?.let { file ->
                     source.fileSystem.bucket.rename(file.objectId, target.path)
                 }
             } else {
@@ -168,56 +154,3 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     }
 }
 
-class GridFSFileAttributeView(private val path: GridFSPath) : BasicFileAttributeView {
-    override fun readAttributes(): BasicFileAttributes {
-        return GridsFSFileAttributes(path)
-    }
-
-    override fun setTimes(lastModifiedTime: FileTime?, lastAccessTime: FileTime?, createTime: FileTime?) {
-    }
-
-    override fun name(): String? {
-        return "gridfs"
-    }
-}
-
-class GridsFSFileAttributes(private val path: GridFSPath) : BasicFileAttributes {
-    override fun isRegularFile(): Boolean {
-        return true
-    }
-
-    override fun lastAccessTime(): FileTime? {
-        path.toGridFSFile()?.metadata
-        throw UnsupportedOperationException()
-    }
-
-    override fun isOther(): Boolean {
-        return false
-    }
-
-    override fun isDirectory(): Boolean {
-        return false
-    }
-
-    override fun isSymbolicLink(): Boolean {
-        return false
-    }
-
-    override fun creationTime(): FileTime {
-        return FileTime.from(getFile().uploadDate.toInstant())
-    }
-
-    private fun getFile() = path.toGridFSFile() ?: throw RuntimeException("TODO")
-
-    override fun size(): Long {
-        return getFile().length
-    }
-
-    override fun fileKey(): Any? {
-        return path.path
-    }
-
-    override fun lastModifiedTime(): FileTime? {
-        return creationTime()
-    }
-}

@@ -1,8 +1,14 @@
 package com.antwerkz.gridfs
 
+import com.mongodb.client.gridfs.GridFSUploadStream
+import com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions
 import com.mongodb.client.gridfs.model.GridFSFile
+import com.mongodb.client.gridfs.model.GridFSUploadOptions
+import com.mongodb.client.model.Filters
 import org.bson.Document
 import java.io.File
+import java.io.FileNotFoundException
+import java.io.InputStream
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.LinkOption
@@ -13,15 +19,18 @@ import java.nio.file.WatchKey
 import java.nio.file.WatchService
 
 class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
-
     constructor(fileSystem: GridFSFileSystem, elements: List<String>) : this(fileSystem, elements.joinToString(fileSystem.separator))
 
-    fun toGridFSFile() : GridFSFile? {
-        val bucket = fileSystem.bucket
-        return bucket.find(Document("filename", path)).firstOrNull()
+    var file: GridFSFile? = null
+        get() {
+            return fileSystem.bucket.find(Filters.eq("filename", path)).firstOrNull() ?: throw missingFile()
+        }
+
+    private fun missingFile(): Nothing {
+        throw FileNotFoundException("${path} does not exist")
     }
 
-    override fun toFile(): File {
+    override fun toFile(): File? {
         throw UnsupportedOperationException()
     }
 
@@ -120,8 +129,8 @@ class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
     }
 
     override fun startsWith(other: Path): Boolean {
-        var that = other.iterator()
-        var me = iterator()
+        val that = other.iterator()
+        val me = iterator()
         var starts = true
         while (starts && me.hasNext() && that.hasNext()) {
             starts = me.next().equals(that.next())
@@ -170,6 +179,10 @@ class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
         }
     }
 
+    fun size(): Long {
+        return file?.length ?: missingFile()
+    }
+
     override fun toAbsolutePath(): Path {
         if (path.startsWith("/")) {
             return this
@@ -178,8 +191,17 @@ class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
     }
 
     override fun toString(): String {
-        return fileSystem.provider().scheme + "://${fileSystem.hosts}/${fileSystem.database.name}.${fileSystem.bucketName}/${path}"
+        return fileSystem.provider().scheme + "://${fileSystem.hosts}/${fileSystem.database.name}.${fileSystem.bucketName}${path}"
     }
+
+    fun newInputStream(): InputStream {
+        return fileSystem.bucket.openDownloadStreamByName(path, GridFSDownloadByNameOptions())
+    }
+
+     fun newOutputStream(): GridFSUploadStream {
+        return fileSystem.bucket.openUploadStream(path, GridFSUploadOptions())
+    }
+
 
     private fun split() = path.split(fileSystem.separator).dropLastWhile { it == "" }
 
@@ -200,6 +222,4 @@ class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
         result += 31 * result + path.hashCode()
         return result
     }
-
-
 }
