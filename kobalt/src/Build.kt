@@ -9,7 +9,7 @@ val repos = repos()
 val groupId = "com.antwerkz.gridfs"
 
 object Versions {
-    val version = "0.2-SNAPSHOT"
+    val version = "0.2"
     val kotlin = "1.0.3"
     val driverVersion = "3.2.1"
 }
