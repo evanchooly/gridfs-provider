@@ -10,7 +10,7 @@ val groupId = "com.antwerkz.gridfs"
 
 object Versions {
     val version = "0.2-SNAPSHOT"
-    val kotlin = "1.0.2"
+    val kotlin = "1.0.3"
     val driverVersion = "3.2.1"
 }
 
@@ -38,6 +38,7 @@ val core = project {
         compile("org.slf4j:slf4j-api:1.7.6"/*, optional*/)
         compile("org.jetbrains.kotlin:kotlin-stdlib:${Versions.kotlin}")
         compile("org.mongodb:mongodb-driver:${Versions.driverVersion}")
+        compile("com.google.guava:guava:19.0")
     }
 
     dependenciesTest {
