@@ -1,5 +1,10 @@
 package com.antwerkz.gridfs
 
+import com.google.common.cache.CacheBuilder
+import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
+import com.google.common.cache.RemovalListener
+import com.google.common.cache.RemovalNotification
 import com.mongodb.MongoClientURI
 import com.mongodb.client.gridfs.GridFSUploadStream
 import com.mongodb.client.model.Filters
@@ -23,18 +28,45 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.SECONDS
 
 class GridFSFileSystemProvider : FileSystemProvider() {
+    val cache: LoadingCache<URI, GridFSFileSystem>
+
+    init {
+        cache = CacheBuilder
+                .newBuilder()
+                .maximumSize(10)
+                .expireAfterWrite(10, SECONDS)
+                .removalListener(object : RemovalListener<URI, GridFSFileSystem> {
+                    override fun onRemoval(notification: RemovalNotification<URI, GridFSFileSystem>) {
+                        println("notification = ${notification}")
+                        println("pruning cache")
+                        notification.value?.client?.close()
+                    }
+
+                })
+                .build(
+                        object : CacheLoader<URI, GridFSFileSystem>() {
+                            override fun load(uri: URI): GridFSFileSystem {
+                                return GridFSFileSystem(MongoClientURI(uri.toString().replace("gridfs://", "mongodb://")),
+                                        this@GridFSFileSystemProvider)
+                            }
+                        })
+
+    }
+
     override fun getScheme(): String {
         return "gridfs"
     }
 
-    override fun newFileSystem(uri: URI, env: Map<String, *>?): FileSystem {
-        return GridFSFileSystem(MongoClientURI(uri.toString().replace("gridfs://", "mongodb://")), this)
+    override fun newFileSystem(uri: URI, env: Map<String, *>?): GridFSFileSystem {
+        return cache.get(uri)
     }
 
     override fun getFileSystem(uri: URI): FileSystem {
-        return newFileSystem(uri, null)
+        return cache.get(uri)
     }
 
     override fun getPath(uri: URI): Path {
@@ -55,7 +87,7 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     }
 
     override fun newByteChannel(path: Path?, options: Set<OpenOption>, vararg attrs: FileAttribute<*>): SeekableByteChannel {
-        return GridFSByteChannel(checkPath(path) )
+        return GridFSByteChannel(checkPath(path))
     }
 
     internal fun checkPath(path: Path?): GridFSPath {
@@ -67,7 +99,7 @@ class GridFSFileSystemProvider : FileSystemProvider() {
             return path
         }
     }
-    
+
     override fun newDirectoryStream(dir: Path, filter: Filter<in Path>): DirectoryStream<Path> {
         throw UnsupportedOperationException("Not implemented")
     }

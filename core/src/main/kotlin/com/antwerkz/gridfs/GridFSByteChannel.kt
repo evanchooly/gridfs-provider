@@ -83,7 +83,7 @@ class GridFSByteChannel(val path: GridFSPath) : SeekableByteChannel {
     }
 
     override fun isOpen(): Boolean {
-        throw UnsupportedOperationException()
+        return inputStream != null || outputStream != null
     }
 
     override fun close() {
