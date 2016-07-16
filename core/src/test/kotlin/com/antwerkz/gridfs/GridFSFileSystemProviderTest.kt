@@ -2,14 +2,15 @@ package com.antwerkz.gridfs
 
 import com.mongodb.MongoClient
 import com.mongodb.client.gridfs.GridFSBuckets
+import org.testng.Assert
 import org.testng.Assert.assertEquals
 import org.testng.Assert.assertNotNull
 import org.testng.annotations.Test
 import java.io.ByteArrayOutputStream
+import java.net.MalformedURLException
 import java.net.URI
 import java.nio.ByteBuffer
 import java.nio.file.Files
-import java.nio.file.Paths
 
 class GridFSFileSystemProviderTest {
     @Test
@@ -50,11 +51,29 @@ class GridFSFileSystemProviderTest {
     @Test
     fun testCache() {
         val provider = GridFSFileSystemProvider()
-        val path1 = provider.getPath(URI("gridfs://localhost:27017/gridfs.archives/some/path/to/file"))
-        val path2 = provider.getPath(URI("gridfs://localhost:27017/gridfs.archives/some/path/to/file"))
-        val path3 = provider.getPath(URI("gridfs://localhost:27017/gridfs.archives/some/other/path/to/file"))
+        val path1 = provider.getPath(URI("gridfs://localhost:27017/movies.archives/some/path/to/file"))
+        val path2 = provider.getPath(URI("gridfs://localhost:27017/movies.archives/some/path/to/file"))
+        val path3 = provider.getPath(URI("gridfs://localhost:27017/movies.archives/some/other/path/to/file"))
 
         assertEquals(path1.fileSystem, path2.fileSystem);
         assertEquals(path1.fileSystem, path3.fileSystem);
+    }
+
+    @Test
+    fun testUrlParsing() {
+        val provider = GridFSFileSystemProvider()
+        val path = provider.getPath(URI("gridfs://localhost:27017/movies.archives/some/path/to/file")) as GridFSPath
+
+        Assert.assertEquals(path.fileSystem.bucketName, "archives");
+
+    }
+
+    @Test(expectedExceptions = arrayOf(MalformedURLException::class))
+    fun testBadUrlParsing() {
+        val provider = GridFSFileSystemProvider()
+        val path = provider.getPath(URI("gridfs://localhost:27017/movies/archives/some/path/to/file")) as GridFSPath
+
+        Assert.assertEquals(path.fileSystem.bucketName, "archives");
+
     }
 }

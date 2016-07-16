@@ -23,7 +23,7 @@ class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
 
     var file: GridFSFile? = null
         get() {
-            return fileSystem.bucket.find(Filters.eq("filename", path)).firstOrNull() ?: throw missingFile()
+            return fileSystem.bucket.find(Filters.eq("filename", path)).firstOrNull() ?: null
         }
 
     private fun missingFile(): Nothing {

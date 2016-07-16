@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <properties>
-        <kotlin.version>1.0.1-2</kotlin.version>
-    </properties>
 
     <parent>
-        <groupId>com.antwerkz.gridfs-fs-provider</groupId>
-        <artifactId>gridfs-fs-provider</artifactId>
-        <version>0.2-SNAPSHOT</version>
+        <groupId>com.antwerkz.gridfs</groupId>
+        <artifactId>gridfs-provider</artifactId>
+        <version>0.3-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>gridfs-test</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -49,7 +46,7 @@
             <version>${kotlin.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.antwerkz.gridfs-fs-provider</groupId>
+            <groupId>com.antwerkz.gridfs</groupId>
             <artifactId>gridfs-core</artifactId>
             <version>${project.version}</version>
         </dependency>

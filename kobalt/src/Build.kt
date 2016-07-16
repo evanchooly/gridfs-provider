@@ -9,7 +9,7 @@ val repos = repos()
 val groupId = "com.antwerkz.gridfs"
 
 object Versions {
-    val version = "0.2"
+    val version = "0.3-SNAPSHOT"
     val kotlin = "1.0.3"
     val driverVersion = "3.2.1"
 }
@@ -18,7 +18,7 @@ val core = project {
 
     directory = "core"
     group = groupId
-    name = "gridfs-fs-provider"
+    name = "gridfs-provider"
     artifactId = name
     version = Versions.version
     licenses = arrayListOf(License("Apache-2.0", "http://www.apache.org/licenses/LICENSE-2.0"))

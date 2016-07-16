@@ -10,6 +10,7 @@ import com.mongodb.client.gridfs.GridFSUploadStream
 import com.mongodb.client.model.Filters
 import java.io.FileNotFoundException
 import java.io.InputStream
+import java.net.MalformedURLException
 import java.net.URI
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.AccessMode
@@ -70,12 +71,15 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     }
 
     override fun getPath(uri: URI): Path {
-        val split = uri.path.split("/")
-        val ns = split[1]
-        val path = split.drop(2).joinToString("/", "/")
-        val mongoUri = uri.toString().replace(uri.path, "") + "/" + ns
+        val path = uri.path.dropWhile { it == '/' }
+        val ns = path.substringBefore("/")
+        if (!ns.contains('.')) {
+            throw MalformedURLException("GridFS URIs must be in the form 'gridfs://<host>[:<port>]/<database>.<collection>'")
+        }
+        val fileName = path.substringAfter("/")
+        val mongoUri = uri.toString().replace(path, "") + ns
         val fileSystem = getFileSystem(URI(mongoUri))
-        return fileSystem.getPath(path)
+        return fileSystem.getPath("/" + fileName)
     }
 
     override fun newInputStream(path: Path, vararg options: OpenOption): InputStream {

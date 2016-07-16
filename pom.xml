@@ -7,12 +7,12 @@
         <version>7</version>
     </parent>
 
-    <groupId>com.antwerkz.gridfs-fs-provider</groupId>
-    <artifactId>gridfs-fs-provider</artifactId>
-    <version>0.2-SNAPSHOT</version>
+    <groupId>com.antwerkz.gridfs</groupId>
+    <artifactId>gridfs-provider</artifactId>
+    <version>0.3-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>gridfs-fs-provider</name>
+    <name>gridfs-provider</name>
     <url>https://github.com/evanchooly/gridfs-fs-provider</url>
 
     <scm>
@@ -22,7 +22,7 @@
     </scm>
 
     <properties>
-        <kotlin.version>1.0.2</kotlin.version>
+        <kotlin.version>1.0.3</kotlin.version>
         <dokka.version>0.9.8</dokka.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
@@ -126,7 +126,7 @@
             <dependency>
                 <groupId>org.mongodb</groupId>
                 <artifactId>mongodb-driver</artifactId>
-                <version>3.2.1</version>
+                <version>3.2.2</version>
             </dependency>
             <dependency>
                 <groupId>com.google.guava</groupId>
