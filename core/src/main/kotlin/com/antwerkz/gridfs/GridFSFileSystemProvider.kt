@@ -3,7 +3,6 @@ package com.antwerkz.gridfs
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
-import com.google.common.cache.RemovalListener
 import com.google.common.cache.RemovalNotification
 import com.mongodb.MongoClientURI
 import com.mongodb.client.gridfs.GridFSUploadStream
@@ -29,8 +28,8 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.SECONDS
+import java.util.regex.Pattern
 
 class GridFSFileSystemProvider : FileSystemProvider() {
     val cache: LoadingCache<URI, GridFSFileSystem>
@@ -40,14 +39,7 @@ class GridFSFileSystemProvider : FileSystemProvider() {
                 .newBuilder()
                 .maximumSize(10)
                 .expireAfterWrite(10, SECONDS)
-                .removalListener(object : RemovalListener<URI, GridFSFileSystem> {
-                    override fun onRemoval(notification: RemovalNotification<URI, GridFSFileSystem>) {
-                        println("notification = ${notification}")
-                        println("pruning cache")
-                        notification.value?.client?.close()
-                    }
-
-                })
+                .removalListener { notification: RemovalNotification<URI, GridFSFileSystem> -> notification.value?.client?.close() }
                 .build(
                         object : CacheLoader<URI, GridFSFileSystem>() {
                             override fun load(uri: URI): GridFSFileSystem {
@@ -62,9 +54,7 @@ class GridFSFileSystemProvider : FileSystemProvider() {
         return "gridfs"
     }
 
-    override fun newFileSystem(uri: URI, env: Map<String, *>?): GridFSFileSystem {
-        return cache.get(uri)
-    }
+    override fun newFileSystem(uri: URI, env: Map<String, *>?) = getFileSystem(uri)
 
     override fun getFileSystem(uri: URI): FileSystem {
         return cache.get(uri)
@@ -114,9 +104,13 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     override fun delete(path: Path) {
         path as GridFSPath
 
+        val file = path.file
         val bucket = path.fileSystem.bucket
-        path.file?.let { file ->
+        if (file != null) {
             bucket.delete(file.objectId)
+        } else if (path.path.endsWith("/")) {
+            val find = bucket.find(Filters.regex("filename", Pattern.compile(path.path).pattern() + ".*")).toList()
+            find.forEach { bucket.delete(it.objectId) }
         }
     }
 
