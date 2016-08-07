@@ -1,5 +1,4 @@
-import com.beust.kobalt.api.License
-import com.beust.kobalt.api.Scm
+import org.apache.maven.model.*
 import com.beust.kobalt.plugin.packaging.assemble
 import com.beust.kobalt.plugin.publish.bintray
 import com.beust.kobalt.project
@@ -21,10 +20,17 @@ val core = project {
     name = "gridfs-provider"
     artifactId = name
     version = Versions.version
-    licenses = arrayListOf(License("Apache-2.0", "http://www.apache.org/licenses/LICENSE-2.0"))
-    scm = Scm(url = "http://github.com/evanchooly/gridfs-fs-provider",
-            connection = "https://github.com/evanchooly/gridfs-fs-provider.git",
-            developerConnection = "git@github.com:evanchooly/gridfs-fs-provider.git")
+    pom = Model().apply {
+        licenses = listOf(License().apply {
+            name = "Apache-2.0"
+            url = "http://www.apache.org/licenses/LICENSE-2.0"
+        })
+        scm = Scm().apply {
+            url = "http://github.com/evanchooly/gridfs-fs-provider"
+            connection = "https://github.com/evanchooly/gridfs-fs-provider.git"
+            developerConnection = "git@github.com:evanchooly/gridfs-fs-provider.git"
+        }
+    }
 
     sourceDirectories {
         path("src/main/kotlin")
