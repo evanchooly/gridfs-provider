@@ -26,9 +26,9 @@ val core = project {
             url = "http://www.apache.org/licenses/LICENSE-2.0"
         })
         scm = Scm().apply {
-            url = "http://github.com/evanchooly/gridfs-fs-provider"
-            connection = "https://github.com/evanchooly/gridfs-fs-provider.git"
-            developerConnection = "git@github.com:evanchooly/gridfs-fs-provider.git"
+            url = "http://github.com/evanchooly/gridfs-provider"
+            connection = "https://github.com/evanchooly/gridfs-provider.git"
+            developerConnection = "git@github.com:evanchooly/gridfs-provider.git"
         }
     }
 
