@@ -191,7 +191,7 @@ class GridFSPath(val fileSystem: GridFSFileSystem, val path: String) : Path {
     }
 
     override fun toString(): String {
-        return fileSystem.provider().scheme + "://${fileSystem.hosts}/${fileSystem.database.name}.${fileSystem.bucketName}${path}"
+        return fileSystem.provider().scheme + "://${fileSystem.database.name}.${fileSystem.bucketName}${path}"
     }
 
     fun newInputStream(): InputStream {

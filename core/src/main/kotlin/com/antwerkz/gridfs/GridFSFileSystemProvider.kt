@@ -4,9 +4,13 @@ import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
 import com.google.common.cache.RemovalNotification
+import com.mongodb.MongoClient
+import com.mongodb.MongoClientOptions
 import com.mongodb.MongoClientURI
+import com.mongodb.MongoNamespace
 import com.mongodb.client.gridfs.GridFSUploadStream
 import com.mongodb.client.model.Filters
+import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.net.MalformedURLException
@@ -31,34 +35,29 @@ import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.TimeUnit.SECONDS
 import java.util.regex.Pattern
 
-class GridFSFileSystemProvider : FileSystemProvider() {
-    val cache: LoadingCache<URI, GridFSFileSystem>
-
-    init {
-        cache = CacheBuilder
-                .newBuilder()
-                .maximumSize(10)
-                .expireAfterWrite(10, SECONDS)
-                .removalListener { notification: RemovalNotification<URI, GridFSFileSystem> -> notification.value?.client?.close() }
-                .build(
-                        object : CacheLoader<URI, GridFSFileSystem>() {
-                            override fun load(uri: URI): GridFSFileSystem {
-                                return GridFSFileSystem(MongoClientURI(uri.toString().replace("gridfs://", "mongodb://")),
-                                        this@GridFSFileSystemProvider)
-                            }
-                        })
-
+class GridFSFileSystemProvider(private val client: MongoClient) : FileSystemProvider() {
+    companion object {
+        private val OPTIONS = "gridfs.options"
     }
+
+    private val fsCache = mutableMapOf<MongoNamespace, GridFSFileSystem>()
 
     override fun getScheme(): String {
         return "gridfs"
     }
 
-    override fun newFileSystem(uri: URI, env: Map<String, *>?) = getFileSystem(uri)
-
-    override fun getFileSystem(uri: URI): FileSystem {
-        return cache.get(uri)
+    override fun newFileSystem(uri: URI, env: Map<String, *>?): FileSystem {
+        val gridfsUri = uri.toString().replace("gridfs://", "mongodb://")
+        val options = env?.get(OPTIONS) as MongoClientOptions?
+        val builder = if (options == null) MongoClientOptions.builder() else MongoClientOptions.builder(options)
+        val clientUri = MongoClientURI(gridfsUri, builder)
+        val bucket = clientUri.collection ?: "gridfs"
+        return fsCache.getOrPut(MongoNamespace(clientUri.database, bucket), {
+            GridFSFileSystem(this, client, clientUri.database, bucket)
+        })
     }
+
+    override fun getFileSystem(uri: URI) = newFileSystem(uri, mapOf<String, Any>())
 
     override fun getPath(uri: URI): Path {
         val path = uri.path.dropWhile { it == '/' }
@@ -148,7 +147,7 @@ class GridFSFileSystemProvider : FileSystemProvider() {
     }
 
     override fun isHidden(path: Path): Boolean {
-        return false;
+        return false
     }
 
     override fun getFileStore(path: Path): FileStore {

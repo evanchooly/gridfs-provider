@@ -14,6 +14,7 @@ class LoadTest {
     companion object {
         val fileCount = 10000
         val fileSize = 10000
+        val provider = GridFSFileSystemProvider(MongoClient())
     }
 
     @Test
@@ -21,7 +22,7 @@ class LoadTest {
         val database = MongoClient().getDatabase("gridfs")
         database.drop()
 
-        val dir = File("/tmp/${ObjectId()}")
+        val dir = File(System.getProperty("java.io.tmpdir"), "${ObjectId()}")
         try {
             dir.mkdirs()
             val file = buildFile()
@@ -29,14 +30,14 @@ class LoadTest {
                 val temp = File.createTempFile("load-$it", ".random", dir)
                 temp.writeBytes(file)
             }
-            val targetDir = Paths.get(URI("gridfs://localhost/gridfs.load/"))
-            val dirPath = dir.toPath()
+            val targetDir = provider.getPath(URI("gridfs://localhost/gridfs.load/"))
 
             dir.walk()
                     .filter { !it.isDirectory }
                     .forEach {
-                        val second = targetDir.resolve(dirPath.relativize(Paths.get(it.absolutePath)).toString())
-                        Files.move(Paths.get(it.absolutePath), second, StandardCopyOption.REPLACE_EXISTING)
+                        val local = Paths.get(it.absolutePath)
+                        val second = targetDir.resolve(it.name)
+                        Files.move(local, second, StandardCopyOption.REPLACE_EXISTING)
                     }
             Assert.assertEquals(database.getCollection("load.files").count().toInt(), fileCount + 1)
         } finally {

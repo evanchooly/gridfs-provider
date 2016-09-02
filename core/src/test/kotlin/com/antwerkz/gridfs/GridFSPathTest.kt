@@ -8,7 +8,8 @@ import java.net.URI
 
 class GridFSPathTest {
     val client = MongoClient("localhost")
-    val fileSystem = GridFSFileSystemProvider().getFileSystem(URI("gridfs://localhost/bob")) as GridFSFileSystem
+    val fileSystem = GridFSFileSystemProvider(client)
+            .getFileSystem(URI("gridfs://localhost/bob")) as GridFSFileSystem
 
     @AfterTest
     fun close() {

@@ -1,7 +1,6 @@
 package com.antwerkz.gridfs
 
 import com.mongodb.MongoClient
-import com.mongodb.MongoClientURI
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.gridfs.GridFSBucket
 import com.mongodb.client.gridfs.GridFSBuckets
@@ -13,19 +12,18 @@ import java.nio.file.WatchService
 import java.nio.file.attribute.UserPrincipalLookupService
 import java.nio.file.spi.FileSystemProvider
 
-class GridFSFileSystem(uri: MongoClientURI, private val provider: GridFSFileSystemProvider) : FileSystem() {
+class GridFSFileSystem(private val provider: GridFSFileSystemProvider, mongoClient: MongoClient, dbName: String?,
+                       bucketName: String) : FileSystem() {
     private var open = true
     val database: MongoDatabase
     val client: MongoClient
     val bucketName: String
     val bucket: GridFSBucket
-    val hosts: String
 
     init {
-        client = MongoClient(uri);
-        hosts = uri.hosts.joinToString(",")
-        database = client.getDatabase(uri.database)
-        bucketName = uri.collection ?: "gridfs"
+        client = mongoClient
+        database = client.getDatabase(dbName)
+        this.bucketName = bucketName
         bucket = GridFSBuckets.create(database, bucketName)
     }
 
@@ -50,7 +48,7 @@ class GridFSFileSystem(uri: MongoClientURI, private val provider: GridFSFileSyst
     }
 
     override fun getPath(first: String, vararg more: String): GridFSPath {
-        return if (more.size == 0) GridFSPath(this, first) else GridFSPath(this, listOf(first) + more.asList());
+        return if (more.size == 0) GridFSPath(this, first) else GridFSPath(this, listOf(first) + more.asList())
     }
 
     override fun provider(): FileSystemProvider {
