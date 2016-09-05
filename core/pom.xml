@@ -7,13 +7,13 @@
 
     <parent>
         <groupId>com.antwerkz.gridfs</groupId>
-        <artifactId>gridfs-provider</artifactId>
-        <version>0.3-SNAPSHOT</version>
+        <artifactId>gridfs-parent</artifactId>
+        <version>0.4-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>gridfs-core</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <artifactId>gridfs-provider</artifactId>
+    <version>0.4-SNAPSHOT</version>
 
     <build>
         <plugins>

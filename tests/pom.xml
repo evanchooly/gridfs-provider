@@ -4,13 +4,13 @@
 
     <parent>
         <groupId>com.antwerkz.gridfs</groupId>
-        <artifactId>gridfs-provider</artifactId>
-        <version>0.3-SNAPSHOT</version>
+        <artifactId>gridfs-parent</artifactId>
+        <version>0.4-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>gridfs-test</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.4-SNAPSHOT</version>
 
     <build>
         <plugins>
@@ -47,7 +47,7 @@
         </dependency>
         <dependency>
             <groupId>com.antwerkz.gridfs</groupId>
-            <artifactId>gridfs-core</artifactId>
+            <artifactId>gridfs-provider</artifactId>
             <version>${project.version}</version>
         </dependency>
     </dependencies>

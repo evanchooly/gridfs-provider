@@ -1,16 +1,11 @@
 package com.antwerkz.gridfs
 
-import com.google.common.cache.CacheBuilder
-import com.google.common.cache.CacheLoader
-import com.google.common.cache.LoadingCache
-import com.google.common.cache.RemovalNotification
 import com.mongodb.MongoClient
 import com.mongodb.MongoClientOptions
 import com.mongodb.MongoClientURI
 import com.mongodb.MongoNamespace
 import com.mongodb.client.gridfs.GridFSUploadStream
 import com.mongodb.client.model.Filters
-import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.io.InputStream
 import java.net.MalformedURLException
@@ -32,7 +27,6 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
-import java.util.concurrent.TimeUnit.SECONDS
 import java.util.regex.Pattern
 
 class GridFSFileSystemProvider(private val client: MongoClient) : FileSystemProvider() {
@@ -58,6 +52,12 @@ class GridFSFileSystemProvider(private val client: MongoClient) : FileSystemProv
     }
 
     override fun getFileSystem(uri: URI) = newFileSystem(uri, mapOf<String, Any>())
+
+    fun getFileSystem(database: String, bucket: String): GridFSFileSystem {
+        return fsCache.getOrPut(MongoNamespace(database, bucket), {
+            GridFSFileSystem(this, client, database, bucket)
+        })
+    }
 
     override fun getPath(uri: URI): Path {
         val path = uri.path.dropWhile { it == '/' }

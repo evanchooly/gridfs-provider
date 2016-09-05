@@ -8,11 +8,11 @@
     </parent>
 
     <groupId>com.antwerkz.gridfs</groupId>
-    <artifactId>gridfs-provider</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <artifactId>gridfs-parent</artifactId>
+    <version>0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>gridfs-provider</name>
+    <name>gridfs-parent</name>
     <url>https://github.com/evanchooly/gridfs-fs-provider</url>
 
     <scm>
