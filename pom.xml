@@ -22,7 +22,7 @@
     </scm>
 
     <properties>
-        <kotlin.version>1.0.3</kotlin.version>
+        <kotlin.version>1.6.0</kotlin.version>
         <dokka.version>0.9.8</dokka.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
